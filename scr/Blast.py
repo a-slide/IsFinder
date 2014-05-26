@@ -8,90 +8,100 @@ class Blast(object):
     """Singleton class to manage blast db creation and blastn
     """
 ####################################################################################################
-    
-    ####    PUBLIC METHODS     ####
-    
+
+    ####    PUBLIC CLASS METHODS     ####
+
     @ classmethod
     def blast (self, query, subject, makedb=True, evalue=10):
-        """ 
+        """
         """
         # If needed a blast database will be generated
         if makedb:
-            cmd = "makeblastdb -in {0} -dbtype nucl -input_type fasta".format(subject)
-            print ("Creating subject database") 
+            cmd = "makeblastdb -in {0} -dbtype nucl -inut_type fasta".format(subject)
+            print ("\nCreating subject database")
             print(self._cmd_return(cmd))
-    
+
         cmd = "blastn -task blastn -outfmt 6 -dust no -num_threads {0} -evalue {1} -query {2} -db {3}".format(
             cpu_count(), evalue, query, subject)
-    
-        print ("Blast query against subject database")
+
+        print ("\nBlast query against subject database")
         for h in self._parse_blast(cmd):
-            hit = BlastHit(h[0], h[1] , h[2], h[3], h[4], h[5], h[6], h[7], h[8], h[9], h[10], h[11])
-            print (hit)
-        
-        BlastHit.count_total()
-        BlastHit.count_per_ref()
-        BlastHit.get()
-        BlastHit.get_ref()
-        
-    ####    PRIVATE METHODS     ####
-    
+            hit = Hit(h[0], h[1] , h[2], h[3], h[4], h[5], h[6], h[7], h[8], h[9], h[10], h[11])
+
+        print ("\t{} hits found in the reference genome".format(Hit.count_total()))
+        for ref, count in Hit.count_per_ref().items():
+            print ("\t* {} {} in ref {}".format(count, "hit" if count == 1 else "hits", ref))
+
+        for hit in Hit.get():
+            print (repr(hit))
+
+        #return Hit.get()
+
+    ####    PRIVATE CLASS METHODS     ####
+
     @ classmethod
     def _parse_blast (self, cmd):
         return [i.split() for i in self._split_lines (cmd)]
-    
+
     @ classmethod
     def _split_lines (self, cmd):
         return [i for i in self._cmd_return(cmd).splitlines()]
-    
+
     @ classmethod
-    def _cmd_return(self, command):
+    def _return_cmd (self, cmd):
+        stdout, stderr = self._run_cmd(cmd)
+        print stdout
+        print stderr
+
+    @ classmethod
+    def _run_cmd(self, cmd):
         try:
-            return (Popen(command, shell=True, stdout=PIPE).stdout.read())
+            stdout, stderr = (Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE))
+            return (stdout.read(), stderr.read())
         except (OSError, ValueError) as E:
-            print (E)
-            exit (0)
-            
+            msg = "An error occured while trying to execute the following command :\n {}".format(cmd)
+            raise BlastException (msg)
+
 ####################################################################################################
 
-class BlastHit(object):
+class Hit(object):
     """Class description
     """
 ####################################################################################################
-    
+
     ####    CLASS FIELD    ####
-    
-    Instances = [] # Class field used for instance tracking 
-    
+
+    Instances = [] # Class field used for instance tracking
+
     ####    CLASS METHODS    ####
-    
+
     @ classmethod
     def count_total (self):
         return (len(self.Instances))
-    
+
     @ classmethod
     def count_per_ref (self):
         d = {}
-        for hit in Instances:
+        for hit in self.Instances:
             if hit.s_id in d:
-                d[ref] +=1
+                d[hit.s_id] +=1
             else:
-                d[ref] = 0
+                d[hit.s_id] = 1
         return d
-        
+
     @ classmethod
     def get (self):
-        return Instances
-        
+        return self.Instances
+
     @ classmethod
     def get_ref (self, ref):
-        return [hit for hit in Instances if hit.s_id == "ref"]
-        
+        return [hit for hit in self.Instances if hit.s_id == "ref"]
+
     ####    FONDAMENTAL METHODS     ####
-   
+
     def __init__(self, q_id, s_id, identity, length, mis, gap, q_start, q_end, s_start, s_end, evalue, bscore):
         """Object constructor"""
-        
+
         # Name of the reference seq in the query and in the subject were a hit was found
         self.q_id = q_id
         self.s_id = s_id
@@ -112,20 +122,21 @@ class BlastHit(object):
         self.s_end = int(s_end) if self.s_orient else int(s_start)
         # Evalue and bit score of the match
         self.evalue = float(evalue)
-        self.bscore = bscore
+        self.bscore = float(bscore)
         # Add the instance to the class instance tracking list
         self.Instances.append(self)
-    
+
     def __repr__(self):
         """Long representation"""
         msg = "{}\n".format(self.__str__())
-        msg += "\tQuery\t{}:{}-{}({})\n".format(self.q_id, self.q_start, self.s_end, self.q_orient)
-        msg += "\tSubject\t{}:{}-{}({})\n".format(self.q_id, self.q_start, self.s_end, self.q_orient)
-        msg += "\tLenght : {}\tIdentity : {}%\tEvalue : {}\tBit score : {}\t".format(self.length, self.identity, self.evalue, self.bscore)
-        
+        msg += "\tQuery\t{}:{}-{}({})\n".format(self.q_id, self.q_start, self.q_end, "+" if self.q_orient else "-")
+        msg += "\tSubject\t{}:{}-{}({})\n".format(self.s_id, self.s_start, self.s_end, "+" if self.q_orient else "-")
+        msg += "\tLenght : {}\tIdentity : {}%\tEvalue : {}\tBit score : {}\n".format(self.length, self.identity, self.evalue, self.bscore)
+        return (msg)
+
     def __str__(self):
         """Short representation"""
-        return "<Instance of " + self.__module__ + ">"
+        return "<Instance of {} >".format(self.__class__.__name__)
 
 ####################################################################################################
 
@@ -138,5 +149,4 @@ class BlastException(Exception):
         self.msg = msg
 
     def __str__(self): # String returned by print
-        err_msg = "BlastHitsException : An error occured while trying to blast ref1 against ref2\n"
-        return err_msg
+        return self.msg
