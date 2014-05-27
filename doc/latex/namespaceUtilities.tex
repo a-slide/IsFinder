@@ -1,0 +1,289 @@
+\hypertarget{namespaceUtilities}{\section{Utilities Namespace Reference}
+\label{namespaceUtilities}\index{Utilities@{Utilities}}
+}
+
+
+Contains several usefull functions to interact with O\-S environement and to parse files.  
+
+
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+def \hyperlink{namespaceUtilities_abe30502337ec442f49d75fd78adc7363}{run\-\_\-shell}
+\begin{DoxyCompactList}\small\item\em Run a command line in the default shell and return the standard output. \end{DoxyCompactList}\item 
+def \hyperlink{namespaceUtilities_a47e69754d361d402b51251f2a12fb3cd}{mkdir}
+\begin{DoxyCompactList}\small\item\em Create a directory at the indicated path\par
+ Reproduce the ability of U\-N\-I\-X \char`\"{}mkdir -\/p\char`\"{} command (ie if the path already exits no exception will be raised). \end{DoxyCompactList}\item 
+def \hyperlink{namespaceUtilities_a368add4683bf899fca50bae0f8fd6945}{file\-\_\-basename}
+\begin{DoxyCompactList}\small\item\em Return the basename of a file without folder location and extension. \end{DoxyCompactList}\item 
+def \hyperlink{namespaceUtilities_a0f30d493c3ef8c9882b561e405ea180c}{file\-\_\-extension}
+\begin{DoxyCompactList}\small\item\em Return the extension of a file. \end{DoxyCompactList}\item 
+def \hyperlink{namespaceUtilities_a1ee03c6d8c2bb70216b5b62051bb125c}{file\-\_\-name}
+\begin{DoxyCompactList}\small\item\em Return the complete name of a file with the extension but without folder location. \end{DoxyCompactList}\item 
+def \hyperlink{namespaceUtilities_a2220b507ca12a02ecf7b3fe058247ea6}{dir\-\_\-name}
+\begin{DoxyCompactList}\small\item\em Return the complete path where is located the file without the file name. \end{DoxyCompactList}\item 
+def \hyperlink{namespaceUtilities_a261d2ca73ac395960d97cf8c6b34ba86}{import\-\_\-fasta}
+\begin{DoxyCompactList}\small\item\em Import sequences from a fasta files in a list of biopython Seq\-Record. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Contains several usefull functions to interact with O\-S environement and to parse files. \begin{DoxyCopyright}{Copyright}
+\href{http://www.gnu.org/licenses/gpl-2.0.html}{\tt G\-N\-U General Public License v2} 
+\end{DoxyCopyright}
+\begin{DoxyAuthor}{Author}
+Adrien Leger \href{mailto:adrien.leger@gmail.com}{\tt adrien.\-leger@gmail.\-com} 
+\end{DoxyAuthor}
+
+
+\subsection{Function Documentation}
+\hypertarget{namespaceUtilities_a2220b507ca12a02ecf7b3fe058247ea6}{\index{Utilities@{Utilities}!dir\-\_\-name@{dir\-\_\-name}}
+\index{dir\-\_\-name@{dir\-\_\-name}!Utilities@{Utilities}}
+\subsubsection[{dir\-\_\-name}]{\setlength{\rightskip}{0pt plus 5cm}def Utilities.\-dir\-\_\-name (
+\begin{DoxyParamCaption}
+\item[{}]{path}
+\end{DoxyParamCaption}
+)}}\label{namespaceUtilities_a2220b507ca12a02ecf7b3fe058247ea6}
+
+
+Return the complete path where is located the file without the file name. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em path} & Filepath as a string \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 96 of file Utilities.\-py.
+
+\hypertarget{namespaceUtilities_a368add4683bf899fca50bae0f8fd6945}{\index{Utilities@{Utilities}!file\-\_\-basename@{file\-\_\-basename}}
+\index{file\-\_\-basename@{file\-\_\-basename}!Utilities@{Utilities}}
+\subsubsection[{file\-\_\-basename}]{\setlength{\rightskip}{0pt plus 5cm}def Utilities.\-file\-\_\-basename (
+\begin{DoxyParamCaption}
+\item[{}]{path}
+\end{DoxyParamCaption}
+)}}\label{namespaceUtilities_a368add4683bf899fca50bae0f8fd6945}
+
+
+Return the basename of a file without folder location and extension. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em path} & Filepath as a string \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 72 of file Utilities.\-py.
+
+
+
+Here is the caller graph for this function\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{namespaceUtilities_a368add4683bf899fca50bae0f8fd6945_icgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespaceUtilities_a0f30d493c3ef8c9882b561e405ea180c}{\index{Utilities@{Utilities}!file\-\_\-extension@{file\-\_\-extension}}
+\index{file\-\_\-extension@{file\-\_\-extension}!Utilities@{Utilities}}
+\subsubsection[{file\-\_\-extension}]{\setlength{\rightskip}{0pt plus 5cm}def Utilities.\-file\-\_\-extension (
+\begin{DoxyParamCaption}
+\item[{}]{path}
+\end{DoxyParamCaption}
+)}}\label{namespaceUtilities_a0f30d493c3ef8c9882b561e405ea180c}
+
+
+Return the extension of a file. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em path} & Filepath as a string \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 80 of file Utilities.\-py.
+
+
+
+Here is the caller graph for this function\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{namespaceUtilities_a0f30d493c3ef8c9882b561e405ea180c_icgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespaceUtilities_a1ee03c6d8c2bb70216b5b62051bb125c}{\index{Utilities@{Utilities}!file\-\_\-name@{file\-\_\-name}}
+\index{file\-\_\-name@{file\-\_\-name}!Utilities@{Utilities}}
+\subsubsection[{file\-\_\-name}]{\setlength{\rightskip}{0pt plus 5cm}def Utilities.\-file\-\_\-name (
+\begin{DoxyParamCaption}
+\item[{}]{path}
+\end{DoxyParamCaption}
+)}}\label{namespaceUtilities_a1ee03c6d8c2bb70216b5b62051bb125c}
+
+
+Return the complete name of a file with the extension but without folder location. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em path} & Filepath as a string \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 88 of file Utilities.\-py.
+
+
+
+Here is the caller graph for this function\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=340pt]{namespaceUtilities_a1ee03c6d8c2bb70216b5b62051bb125c_icgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespaceUtilities_a261d2ca73ac395960d97cf8c6b34ba86}{\index{Utilities@{Utilities}!import\-\_\-fasta@{import\-\_\-fasta}}
+\index{import\-\_\-fasta@{import\-\_\-fasta}!Utilities@{Utilities}}
+\subsubsection[{import\-\_\-fasta}]{\setlength{\rightskip}{0pt plus 5cm}def Utilities.\-import\-\_\-fasta (
+\begin{DoxyParamCaption}
+\item[{}]{filename, }
+\item[{}]{col\-\_\-type = {\ttfamily \char`\"{}dict\char`\"{}}}
+\end{DoxyParamCaption}
+)}}\label{namespaceUtilities_a261d2ca73ac395960d97cf8c6b34ba86}
+
+
+Import sequences from a fasta files in a list of biopython Seq\-Record. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em filename} & Valid path to a fasta file (may contains several sequences) \\
+\hline
+{\em col\-\_\-type} & Type of the collection where Seq\-Reccord entries will be added \char`\"{}list\char`\"{} or \char`\"{}dict\char`\"{}. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+A list or a dictionnary containing all seq\-Reccord objects from the fastq file 
+\end{DoxyReturn}
+
+\begin{DoxyExceptions}{Exceptions}
+{\em I\-O\-Error} & Raise if the path in invalid or unreadeable \\
+\hline
+\end{DoxyExceptions}
+
+
+Definition at line 109 of file Utilities.\-py.
+
+
+
+Here is the call graph for this function\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=338pt]{namespaceUtilities_a261d2ca73ac395960d97cf8c6b34ba86_cgraph}
+\end{center}
+\end{figure}
+
+
+
+
+Here is the caller graph for this function\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{namespaceUtilities_a261d2ca73ac395960d97cf8c6b34ba86_icgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespaceUtilities_a47e69754d361d402b51251f2a12fb3cd}{\index{Utilities@{Utilities}!mkdir@{mkdir}}
+\index{mkdir@{mkdir}!Utilities@{Utilities}}
+\subsubsection[{mkdir}]{\setlength{\rightskip}{0pt plus 5cm}def Utilities.\-mkdir (
+\begin{DoxyParamCaption}
+\item[{}]{fp}
+\end{DoxyParamCaption}
+)}}\label{namespaceUtilities_a47e69754d361d402b51251f2a12fb3cd}
+
+
+Create a directory at the indicated path\par
+ Reproduce the ability of U\-N\-I\-X \char`\"{}mkdir -\/p\char`\"{} command (ie if the path already exits no exception will be raised). 
+
+
+\begin{DoxyParams}{Parameters}
+{\em fp} & path name where the folder should be created \\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyExceptions}{Exceptions}
+{\em O\-S\-Error} & Can be raise by os.\-mkdir \\
+\hline
+\end{DoxyExceptions}
+
+
+Definition at line 51 of file Utilities.\-py.
+
+
+
+Here is the caller graph for this function\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=322pt]{namespaceUtilities_a47e69754d361d402b51251f2a12fb3cd_icgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespaceUtilities_abe30502337ec442f49d75fd78adc7363}{\index{Utilities@{Utilities}!run\-\_\-shell@{run\-\_\-shell}}
+\index{run\-\_\-shell@{run\-\_\-shell}!Utilities@{Utilities}}
+\subsubsection[{run\-\_\-shell}]{\setlength{\rightskip}{0pt plus 5cm}def Utilities.\-run\-\_\-shell (
+\begin{DoxyParamCaption}
+\item[{}]{cmd}
+\end{DoxyParamCaption}
+)}}\label{namespaceUtilities_abe30502337ec442f49d75fd78adc7363}
+
+
+Run a command line in the default shell and return the standard output. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em cmd} & a command line string formated as a string \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+If no standard error return the standard output as a string 
+\end{DoxyReturn}
+
+\begin{DoxyExceptions}{Exceptions}
+{\em O\-S\-Error} & Raise if a message is return on the standard error output \\
+\hline
+{\em (\-Value\-Error,O\-S\-Error)} & May be raise by Popen \\
+\hline
+\end{DoxyExceptions}
+
+
+Definition at line 19 of file Utilities.\-py.
+
+
+
+Here is the caller graph for this function\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=340pt]{namespaceUtilities_abe30502337ec442f49d75fd78adc7363_icgraph}
+\end{center}
+\end{figure}
+
+

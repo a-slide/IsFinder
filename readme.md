@@ -35,12 +35,12 @@ The programm was developed under Linux Mint 16 "petra" but is compatible with ot
 * python 2.7 +
 * Biopython
 
-## Logbook (french)
+## Pipeline development logbook
 
 * [Logbook](http://nbviewer.ipython.org/github/a-slide/IsFinder/blob/master/doc/Logbook.ipynb)
 
 ## Authors and Contact
-Adrien Leger @a-slide
+[Adrien Leger](https://github.com/a-slide) <adrien.leger@gmail.com>
 
-adrien.leger@inserm.fr
+
 
