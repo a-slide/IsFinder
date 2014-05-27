@@ -1,4 +1,0 @@
-<map id="Utilities.file_basename" name="Utilities.file_basename">
-<area shape="rect" id="node3" href="$namespaceHomologyMasker.html#a9129003779af13581edac09232ab478c" title="Main function of RefMasker that integrate database creation, blast and homology masking. " alt="" coords="212,5,383,35"/>
-<area shape="rect" id="node5" href="$namespaceHomologyMasker.html#a248ff1fe5259a0e649cbe4fd5f90fe4c" title="Blast query against a subject database and return a list of BlastHit object. " alt="" coords="209,59,385,88"/>
-</map>
