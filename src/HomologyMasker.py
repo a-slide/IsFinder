@@ -199,7 +199,7 @@ class BlastHit(object):
     * s_start : Hit start position of the subject
     * s_end : Hit end position of the subject
     * evalue : E value of the alignement
-    * b_score : Bit score of the alignement
+    * bscore : Bit score of the alignement
     A class list is used to track all instances generated.
     """
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
