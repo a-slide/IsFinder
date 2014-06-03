@@ -5,6 +5,8 @@
 @author     Adrien Leger <adrien.leger@gmail.com>
 """
 
+#~~~~~~~GLOBAL IMPORTS~~~~~~~#
+
 # Standard library packages
 from multiprocessing import cpu_count
 
@@ -301,4 +303,4 @@ class BlastHit(object):
         return (msg)
 
     def __str__(self):
-        return "<Instance of {} from package {} >".format(self.__class__.__name__, self.__module__)
+        return "<Instance of {} from {} >".format(self.__class__.__name__, self.__module__)
