@@ -40,7 +40,13 @@ The programm was developed under Linux Mint 16 "petra" but is compatible with ot
 * [Logbook](http://nbviewer.ipython.org/github/a-slide/IsFinder/blob/master/doc/Logbook.ipynb)
 
 ## Authors and Contact
-[Adrien Leger](https://github.com/a-slide) <adrien.leger@gmail.com>
+
+Adrien Leger - 2014
+* <adrien.leger@gmail.com>
+* <adrien.leger@inserm.fr>
+* <adrien.leger@univ-nantes.fr>
+* [Github](https://github.com/a-slide)
+* [Atlantic Gene Therapies - INSERM 1089] (http://www.atlantic-gene-therapies.fr/)
 
 
 

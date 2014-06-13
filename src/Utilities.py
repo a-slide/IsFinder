@@ -99,7 +99,7 @@ def dir_name (path):
 def import_fasta(filename, col_type="dict"):
     """
     Import sequences from a fasta files in a list of biopython SeqRecord
-    @param filename Valid path to a fasta file (may contains several sequences)
+    @param filename Valid path to a fasta file. Can contains several sequences and can be gzipped
     @param col_type Type of the collection where SeqReccord entries will be added "list" or "dict".
     @return A list or a dictionnary containing all seqReccord objects from the fastq file
     @exception IOError  Raise if the path in invalid or unreadeable
