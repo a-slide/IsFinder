@@ -12,10 +12,11 @@
 
 #~~~~~~~COMMAND LINE UTILITIES~~~~~~~#
 
-def run_shell(cmd):
+def run_command(cmd, stdinput=None):
     """
     Run a command line in the default shell and return the standard output
     @param  cmd a command line string formated as a string
+    @param  stdinput Facultative parameters to redirect an object to the standard input
     @return If no standard error return the standard output as a string
     @exception  OSError Raise if a message is return on the standard error output
     @exception  (ValueError,OSError) May be raise by Popen
@@ -28,7 +29,11 @@ def run_shell(cmd):
 
     # Try to execute the command line in the default shell
     try:
-        stdout, stderr = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE).communicate()
+        if stdinput:
+            stdout, stderr = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE).communicate(input=stdinput)
+        else:
+            stdout, stderr = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE).communicate()
+
         # If a message is returned on the std err output an SystemError is raised
         if stderr:
             raise OSError("{}\n{}".format(msg, stderr))
