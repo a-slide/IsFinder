@@ -2,69 +2,72 @@
 # -*- coding: utf-8 -*-
 
 from Bio import pairwise2, SeqIO
-from multiprocessing import Pool, cpu_count
-from functools import partial
-from pprint import pprint as pp
+from Utilities import file_basename
 import gzip
 
-MATCH_LIST = []
 
-def main ():
-    adapter_list = ["gcgcg", "gcgcgcg", "atatat", "taggcg", "tgtaa"]
+def quality_control ():
+
+    R1_path = "../test/fastq/med_R1.fastq.gz"
+    R2_path = "../test/fastq/med_R2.fastq.gz"
+    adapter_list = ["gcgcgcg", "atattaat", "tttaggcg", "aataccgattc"]
     min_size = 50
-    min_qual = 32
+    min_qual = 31
+    qual_scale = "fastq-sanger"
 
-    print("Uncompressing and extracting data")
-    R1 = gzip.open("../test/fastq/small.R1.fastq.gz", "r")
-    R2 = gzip.open("../test/fastq/small.R2.fastq.gz", "r")
+    try:
+        print("Uncompressing and extracting data")
+        # Input fastq files
+        input_R1 = gzip.open(R1_path, "r")
+        input_R2 = gzip.open(R2_path, "r")
+        # Output fastq files
+        output_R1 = gzip.open(file_basename(R1_path)+"_trim.fastq.gz", 'w')
+        output_R2 = gzip.open(file_basename(R2_path)+"_trim.fastq.gz", 'w')
+        # Initialize a generator to iterate over fastq files
+        genR1 = SeqIO.parse(input_R1, qual_scale)
+        genR2 = SeqIO.parse(input_R2, qual_scale)
+        # Initialize variables
+        ListR1 = []
+        ListR2 = []
 
-    genR1 = SeqIO.parse(R1, "fastq")
-    genR2 = SeqIO.parse(R2, "fastq")
+        print("Parsing files and filtering sequences")
+        # Parsing files and filtering sequences matching quality requirements
+        while True:
+            seqR1 = next(genR1, None)
+            seqR2 = next(genR2, None)
 
-    ListR1 = []
-    ListR2 = []
+            # End of file
+            if not seqR1 or not seqR2:
+                #print_stat ()
+                break
 
-    Total = 0
-    Qual_passed = 0
-    Trim_passed = 0
+            #TOTAL += 1
 
-    # Parsing file and filtering sequences matching quality requirements
-    while True:
-        seqR1 = next(genR1, None)
-        seqR2 = next(genR2, None)
+            # Quality filter
+            if _rec_qual(seqR1) < min_qual or _rec_qual(seqR1) < min_qual:
+                continue
+            #QUAL_PASSED += 1
 
-        # End of file
-        if not seqR1 or not seqR2:
-            print ("Total sequence = {}".format(Total))
-            print ("Passed quality filter = {}".format(Qual_passed))
-            print ("Passed adapter trimming = {}".format(Trim_passed))
-            break
-        Total +=1
+            # Adapter trimming and size selection
+            seqR1 = trim_adapter(seqR1, adapter_list, min_size)
+            seqR2 = trim_adapter(seqR2, adapter_list, min_size)
+            if not seqR1 or not seqR2:
+                continue
+            #LEN_PASSED += 1
 
-        # Quality filter
-        if _rec_qual(seqR1) < min_qual or _rec_qual(seqR1) < min_qual:
-            continue
-        Qual_passed +=1
+            # If all test passed = append the sequence to the list
+            output_R1.write (seqR1.format (qual_scale))
+            output_R2.write (seqR2.format (qual_scale))
 
-        # Adapter trimming and size selection
-        seqR1 = trim_adapter(seqR1, adapter_list, min_size)
-        seqR2 = trim_adapter(seqR2, adapter_list, min_size)
-        if not seqR1 or not seqR2:
-            continue
-        Trim_passed +=1
+        input_R1.close()
+        input_R2.close()
+        output_R1.close()
+        output_R2.close()
 
-        # If all test passed = append the sequence to the list
-        ListR1.append(seqR1)
-        ListR1.append(seqR2)
-
-    R1.close()
-    R2.close()
-
-    for fastq in ListR1:
-        print ("{} : {}\n".format(fastq.id, fastq.seq))
-
-    for fastq in ListR1:
-        print ("{} : {}\n".format(fastq.id, fastq.seq))
+    except IOError as E:
+        print (E)
+        exit (0)
+    return 1
 
 def _rec_qual(record):
     """
@@ -74,47 +77,48 @@ def _rec_qual(record):
 
 def trim_adapter (record, adapter_list, min_size):
 
-    MATCH_LIST = []
-    # Define the number of parallel thread to use
-    p = Pool(cpu_count()+1)
-    # Define an helper function with partial to allow dealing with multi arg
-    partial_align = partial(align, str(record.seq).lower())
-    # Parallel processing of parwise alignments using Pool map
-    match_list = p.map(partial_align, adapter_list)
-    pp(match_list)
-
-    coverage = [0 for i in range(maxsize)]
-
-    for match in match_list:
-        for seqA, seqB, score, begin, end in match:
-            for i in range (begin, end):
-                coverage[i] = 1
+    match_list = []
+    for adapter in adapter_list:
+        match_list.extend(align(adapter, str(record.seq).lower()))
 
     if not match_list:
         return record
 
+    #print ("{} adapter hit(s) found in {}".format(len(match_list), record.id))
     start, end = longer_interval (match_list, len(record))
+    #TRIMMED_SEQ +=1
+    #TRIMMED_BASE += (len(record)-(end-start))
+
     return record[start:end] if end-start >= min_size else None
 
 def align (adapter, sequence):
     """
     Pairwise alignment using the buildin Biopython function pairwise2
     """
-    match_list = pairwise2.align.localms(sequence, adapter, 2, -1, -1, -.1)
+    pairwise2.MAX_ALIGNMENTS = 5
+    match = 2
+    mismatch = -2
+    open_gap = -2
+    extend_gap = -2
+    cutoff = 1.5
 
-    if match_list:
-        for seqA, seqB, score, begin, end in match_list
-            MATCH_LIST.append([begin, end]):
+    match_list = pairwise2.align.localms(adapter, sequence, match, mismatch, open_gap, extend_gap)
+
+    #for seqA, seqB, score, begin, end in match_list:
+        #if score/len(adapter) > cutoff:
+            #print("{}\n{}\nScore:{}\tBegin:{}\tEnd:{}".format(seqA, seqB, score, begin, end))
+
+    return [[begin, end] for seqA, seqB, score, begin, end in match_list if score/len(adapter) > cutoff]
 
 
 def longer_interval(match_list, maxsize):
     """
     Find the larger interval that do not overlapp an adapter location
     """
+
     coverage = [0 for i in range(maxsize)]
 
-    for seqA, seqB, score, begin, end in match_list:
-        print begin, end
+    for begin, end in match_list:
         for i in range (begin, end):
             coverage[i] = 1
 
@@ -131,9 +135,27 @@ def longer_interval(match_list, maxsize):
                 inter_max = inter
                 start_max = start
                 end_max = i
-    print ("Longer interval = {} [{}:{}]".format(inter_max, start_max+1, end_max-1))
+    #print ("Longer interval = {} [{}:{}]".format(inter_max, start_max+1, end_max-1))
 
     return start_max, end_max
 
+#def print_stat ():
+    #print ("Total sequence = {}".format(TOTAL))
+    #print ("Passed quality filter = {}".format(QUAL_PASSED))
+    #print ("Untrimmed sequences = {}".format(QUAL_PASSED - TRIMMED_SEQ))
+    #print ("Trimmed sequences = {}".format(TRIMMED_SEQ))
+    #print ("Trimmed bases = {}".format(TRIMMED_BASE))
+    #print ("Passed length filter after adapter trimming = {}".format(LEN_PASSED))
+    #return 1
+
 if __name__ == '__main__':
-    main()
+    TOTAL = 0
+    QUAL_PASSED = 0
+    TRIMMED_SEQ = 0
+    TRIMMED_BASE = 0
+    LEN_PASSED = 0
+
+    quality_control()
+
+
+############# FUCKING STRANGE BEHAVIOUR WITH GLOBAL VARIABLES ?????
