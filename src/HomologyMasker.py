@@ -16,7 +16,7 @@
 from multiprocessing import cpu_count
 
 # Local library packages
-from Utilities import run_shell, mkdir, import_fasta, file_basename, file_name
+from Utilities import run_command, mkdir, import_fasta, file_basename, file_name
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -35,7 +35,7 @@ class RefMasker(object):
     #~~~~~~~PUBLIC CLASS METHODS~~~~~~~#
 
     @ classmethod
-    def masker (self, query_list, subject, evalue, subjectdb=''):
+    def masker (self, query_list, subject, evalue, subjectdb=None):
         """
         Main function of RefMasker that integrate database creation, blast and homology masking
         @param  query_list List of paths indicating fasta files containing query sequences. Fasta can contains multiple sequences
@@ -50,7 +50,7 @@ class RefMasker(object):
             subjectdb = "blastdb/" + file_basename(subject)
             # Create the database
             print (Blast.makedb (subject, subjectdb))
-
+        
         # Generate a list of hit containing hits of all sequence in query list in subject
         hit_list = self._list_homologies (query_list, subjectdb, evalue)
 
@@ -77,7 +77,7 @@ class RefMasker(object):
         """
         # Empty list to store hits
         hit_list = []
-
+        
         # Append the list of hits for each query in a bigger list.
         for query in query_list:
             hit_list += Blast.do_blast(query, subjectdb, evalue)
@@ -134,14 +134,14 @@ class Blast(object):
         @param  subject Path to a fasta file containing the reference subject sequences
         @param  output Path to the output database basename
         @return Raw output of makeblastdb
-        @exception (SystemError,OSerror) May be returned by run_shell in case of invalid command line
+        @exception (SystemError,OSerror) May be returned by run_command in case of invalid command line
         """
         print ("\nCreating {} database".format(file_basename (subject)))
 
         # Build the command line string
         cmd = "makeblastdb -in {0} -out {1} -dbtype nucl -input_type fasta".format(subject, output)
         # Create the database
-        return(run_shell(cmd))
+        return(run_command(cmd))
 
     @ classmethod
     def do_blast (self, query, subjectdb, evalue):
@@ -151,8 +151,10 @@ class Blast(object):
         @param  subjectdb Path to the subject blast database basename
         @param  evalue  Cutoff used in blast to select valid hits
         @return A list of BlastHit objects if at least one hit was found
-        @exception (SystemError,OSerror) May be returned by run_shell in case of invalid command line
+        @exception (SystemError,OSerror) May be returned by run_command in case of invalid command line
         """
+        
+        print query
         # Build the command line string
         cmd = "blastn -task blastn -outfmt 6 -dust no -num_threads {0} -evalue {1} -query {2} -db {3}".format(
             cpu_count(), evalue, query, subjectdb)
@@ -184,7 +186,7 @@ class Blast(object):
 
     @ classmethod
     def _split_lines (self, cmd):
-        return [i for i in run_shell(cmd).splitlines()]
+        return [i for i in run_command(cmd).splitlines()]
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
