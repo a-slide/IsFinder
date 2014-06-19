@@ -16,7 +16,7 @@
 from multiprocessing import cpu_count
 
 # Local library packages
-from Utilities import run_command, mkdir, import_fasta, file_basename, file_name
+from Utilities import run_command, mkdir, import_seq, file_basename, file_name
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -50,7 +50,7 @@ class RefMasker(object):
             subjectdb = "blastdb/" + file_basename(subject)
             # Create the database
             print (Blast.makedb (subject, subjectdb))
-        
+
         # Generate a list of hit containing hits of all sequence in query list in subject
         hit_list = self._list_homologies (query_list, subjectdb, evalue)
 
@@ -77,7 +77,7 @@ class RefMasker(object):
         """
         # Empty list to store hits
         hit_list = []
-        
+
         # Append the list of hits for each query in a bigger list.
         for query in query_list:
             hit_list += Blast.do_blast(query, subjectdb, evalue)
@@ -95,7 +95,7 @@ class RefMasker(object):
         """
         # Importing sequences from a fasta file in a dictionnary of SeqRecord
         print ("\nImporting subject sequences for hard masking of homologies")
-        ref_dict = import_fasta(subject, "dict")
+        ref_dict = import_seq(subject, "dict", "fasta")
 
         # Casting Seq type to MutableSeq Type to allow string editing
         for record in ref_dict.values():
@@ -153,7 +153,7 @@ class Blast(object):
         @return A list of BlastHit objects if at least one hit was found
         @exception (SystemError,OSerror) May be returned by run_command in case of invalid command line
         """
-        
+
         print query
         # Build the command line string
         cmd = "blastn -task blastn -outfmt 6 -dust no -num_threads {0} -evalue {1} -query {2} -db {3}".format(
@@ -310,4 +310,4 @@ class BlastHit(object):
         return (msg)
 
     def __str__(self):
-        return "<Instance of {} from {} >".format(self.__class__.__name__, self.__module__)
+        return "<Instance of {} from {} >\n".format(self.__class__.__name__, self.__module__)
