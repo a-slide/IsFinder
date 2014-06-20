@@ -20,7 +20,8 @@ from Bio import SeqIO
 from Bio import pairwise2
 
 # Local Package import
-from Utilities import import_seq, fill_between_graph
+from Utilities import import_seq
+from Utilities import fill_between_graph
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 class FastqFilter(object):
@@ -38,7 +39,7 @@ class FastqFilter(object):
     def __str__(self):
         return "<Instance of {} from {} >\n".format(self.__class__.__name__, self.__module__)
 
-    def __init_ (self, R1_path, R2_path, quality_filter, adapter_trimmer, input_qual, output_qual):
+    def __init__ (self, R1_path, R2_path, quality_filter, adapter_trimmer, input_qual, output_qual):
         """
         """
         # Declare and initialize object variables
@@ -183,19 +184,23 @@ class QualityFilter(object):
         """
         Return a report
         """
-        # Simplify the dict by removing empty quality means
-        reduce_qdict = {key: value for key, value in self.qdict.items() if value !=0}
-        # Calculate simple probability
-        mean_qual = sum([key*value for key, value in reduce_qdict()])/sum(reduce_qdict.values())
-        min_qual = reduce_qdict.keys()[0]
-        max_qual = reduce_qdict.keys()[-1]
-
         report = "====== QUALITY FILTER ======\n\n"
-        report == "  Fail quality filter : {}\n".format(self.qual_fail)
+        report += "  Quality Threshold : {}\n".format(self.min_qual)
+        report += "  Fail quality filter : {}\n".format(self.qual_fail)
         report += "  Pass quality filter : {}\n".format(self.qual_pass)
-        report += "  Mean quality : {}\n".format(mean_qual)
-        report += "  Minimal quality : {}\n".format(min_qual)
-        report += "  Maximal quality : {}\n\n".format(max_qual)
+
+        if self.qual_fail+self.qual_pass != 0:
+            # Simplify the dict by removing empty quality means
+            reduce_qdict = {key: value for key, value in self.qdict.items() if value !=0}
+            print reduce_qdict
+            # Calculate simple probability
+            mean_qual = sum([key*value for key, value in reduce_qdict()])/sum(reduce_qdict.values())
+            min_qual = reduce_qdict.keys()[0]
+            max_qual = reduce_qdict.keys()[-1]
+
+            report += "  Mean quality : {}\n".format(mean_qual)
+            report += "  Minimal quality : {}\n".format(min_qual)
+            report += "  Maximal quality : {}\n\n".format(max_qual)
 
         return report
 
