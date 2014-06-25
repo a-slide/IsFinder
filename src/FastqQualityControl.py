@@ -39,7 +39,7 @@ class FastqFilter(object):
     def __str__(self):
         return "<Instance of {} from {} >\n".format(self.__class__.__name__, self.__module__)
 
-    def __init__ (self, R1_path, R2_path, quality_filter, adapter_trimmer, input_qual, output_qual):
+    def __init__ (self, R1_path, R2_path, quality_filter, adapter_trimmer, input_qual):
         """
         """
         # Declare and initialize object variables
@@ -51,20 +51,18 @@ class FastqFilter(object):
         self.qual = quality_filter
         self.adapt = adapter_trimmer
         self.input_qual = input_qual
-        self.output_qual = output_qual
 
     #~~~~~~~CLASS METHODS~~~~~~~#
 
     def filter(self):
         """
-        bla bla bla
         """
         # Start a time counter
         start_time = time()
         # Declare list to store valid fastq sequences
         ListR1 = []
         ListR2 = []
-
+        
         try:
             print("Uncompressing and extracting data")
             # Input fastq files
@@ -72,35 +70,42 @@ class FastqFilter(object):
             input_R2 = gzip.open(self.R2_path, "r")
 
             # Initialize a generator to iterate over fastq files
-            genR1 = SeqIO.parse(input_R1, qual_scale)
-            genR2 = SeqIO.parse(input_R2, qual_scale)
+            genR1 = SeqIO.parse(input_R1, self.input_qual)
+            genR2 = SeqIO.parse(input_R2, self.input_qual)
 
-            print("Parsing files and filtering sequences")
+            print("Parsing files and filtering sequences\n")
+            print("Number of sequence analyzed :\n")
             # Parsing files and filtering sequences matching quality requirements
             while True:
+                
                 # Import a new pair of fastq until end of file
                 seqR1 = next(genR1, None)
                 seqR2 = next(genR2, None)
                 if not seqR1 or not seqR2:
                     break
+                                   
                 self.total +=1
-
+                if self.total%1000 == 0:
+                    print (self.total)
+                    
                 # Quality filtering
                 if self.qual:
                     seqR1 = self.qual.filter(seqR1)
                     seqR2 = self.qual.filter(seqR2)
                     if not seqR1 or not seqR2:
                         continue
-
+                
+                stime = time()
                 # Adapter trimming and size filtering
                 if self.adapt:
                     seqR1 = self.adapt.trimmer(seqR1)
                     seqR2 = self.adapt.trimmer(seqR2)
                     if not seqR1 or not seqR2:
                         continue
-
+                
+                print ("TOTAL TRIMMING = {} ms\n".format((time()-stime)/1000))
+                
                 # If all test passed = append Sequence to the list
-
                 ListR1.append(seqR1)
                 ListR2.append(seqR2)
 
@@ -121,12 +126,11 @@ class FastqFilter(object):
         """
         report = "====== FASTQFILTER QUALITY CONTROL ======\n\n"
         if exec_time:
-            report =+ "Execution time : {} s".format(exec_time)
+            report += "  Execution time : {} s\n".format(exec_time)
         report += "  Total sequences processed : {}\n".format(self.total)
         report += "  R1 file : {}\n".format (self.R1_path)
         report += "  R2 file : {}\n".format (self.R2_path)
-        report += "  Input quality score : {}\n".format (self.input_qual)
-        report += "  Output quality score : {}\n\n".format (self.input_qual)
+        report += "  Input quality score : {}\n\n".format (self.input_qual)
         if self.qual:
             report += self.qual.get_report()
         if self.adapt:
@@ -192,16 +196,16 @@ class QualityFilter(object):
         if self.qual_fail+self.qual_pass != 0:
             # Simplify the dict by removing empty quality means
             reduce_qdict = {key: value for key, value in self.qdict.items() if value !=0}
-            print reduce_qdict
             # Calculate simple probability
-            mean_qual = sum([key*value for key, value in reduce_qdict()])/sum(reduce_qdict.values())
+            mean_qual = sum([key*value for key, value in reduce_qdict.items()])/sum(reduce_qdict.values())
             min_qual = reduce_qdict.keys()[0]
             max_qual = reduce_qdict.keys()[-1]
 
             report += "  Mean quality : {}\n".format(mean_qual)
             report += "  Minimal quality : {}\n".format(min_qual)
-            report += "  Maximal quality : {}\n\n".format(max_qual)
-
+            report += "  Maximal quality : {}\n".format(max_qual)
+        
+        report += "\n"
         return report
 
     def trace_graph (self):
@@ -245,9 +249,11 @@ class AdapterTrimmer(object):
         self.min_size = min_size
         self.read_len = read_len
         self.aligner = aligner
-
+        
         # Import a list of adapters and add the reverse complements of adapters to the list
         self.adapter_list = import_seq(adapter_path, "list", "fasta")
+        assert self.adapter_list, "The adater list is empty"
+        
         adapter_rc = []
         for i in self.adapter_list:
             rc = i.reverse_complement()
@@ -274,30 +280,40 @@ class AdapterTrimmer(object):
     def trimmer (self, record):
         """
         """
+        stime = time()
         match_list = []
-        for adapter in adapter_list:
+        
+        for adapter in self.adapter_list:
             # Find matches of the adapter along the current read
-            adapter_match = self.aligner.find_match(str(adapter.seq.lower(), str(record.seq).lower()))
+            adapter_match = self.aligner.find_match(str(adapter.seq).lower(), str(record.seq).lower())
             # Update the counter of the adapter with the number of matches found
             adapter.description += (len(adapter_match))
             # Add to the list of
             match_list.extend(adapter_match)
+        
+        print ("FIND MATCH = {} ms".format((time()-stime)/1000))
+        stime = time()
 
         # In case no match were found, the sequence doesn't need to be modify
         if not match_list:
             self.seq_untrimmed += 1
-            self._update_coverage (0, self.read_len-1)
             return record
 
         # Else find the longer interval without adaptor matches
         start, end = self._longer_interval (match_list, len(record))
         assert 0 <= start < end <= len(record), "Invalid interval returned"
-
+        
+        print ("LONGER INTERVAL = {} ms".format((time()-stime)/1000))
+        stime = time()
+        
         # Update counters
         self.seq_trimmed += 1
         self.base_trimmed += (len(record)-(end-start))
         self._update_coverage (start, end)
-
+        
+        print ("COUNTUP = {} ms".format((time()-stime)/1000))
+        stime = time()
+        
         # Return a slice of the reccord corresponding to the longer interval
         if end-start >= self.min_size:
             self.len_pass +=1
@@ -315,15 +331,13 @@ class AdapterTrimmer(object):
         for i in self.adapter_list:
             report += "    Name : {}\tSequence : {}\tTimes trimmed : {}\n".format(
                 i.id, i.seq, i.description)
-
-        report += "  Sequences untrimmed : {}\n".format(self.seq_untrimmed)
+        report += "\n  Sequences untrimmed : {}\n".format(self.seq_untrimmed)
         report += "  Sequences trimmed : {}\n".format(self.seq_trimmed)
         report += "  DNA base trimmed : {}\n".format(self.base_trimmed)
         report += "  Fail len filtering: {}\n".format(self.len_fail)
         report += "  Pass len filtering : {}\n".format(self.len_pass)
         report += "  Total pass : {}\n\n".format(self.len_pass+self.seq_untrimmed)
         report += self.aligner.get_report()
-
         return report
 
     def trace_graph (self):
@@ -346,7 +360,7 @@ class AdapterTrimmer(object):
 
     #~~~~~~~PRIVATE METHODS~~~~~~~#
 
-    def _longer_interval(match_list, maxsize):
+    def _longer_interval(self, match_list, maxsize):
         """
         Find the first larger interval that do not overlapp any match in match list
         This strategy allow to use an unsorted list of match
@@ -433,9 +447,81 @@ class PairwiseAligner(object):
             self.open_gap,
             self.extend_gap)
 
-        for seqA, seqB, score, begin, end in match_list:
-            if score/len(adapter) > self.cutoff:
-                print("{}\n{}\nScore:{}\tBegin:{}\tEnd:{}".format(seqA, seqB, score, begin, end))
+        #for seqA, seqB, score, begin, end in match_list:
+            #if score/len(adapter) > self.cutoff:
+                #print("{}\n{}\nScore:{}\tBegin:{}\tEnd:{}".format(seqA, seqB, score, begin, end))
+
+        # Return begin and end position if a match has a score higher than the cutoff value
+        return [[begin, end] for seqA, seqB, score, begin, end in match_list if score/len(adapter) > self.cutoff]
+
+    def get_report (self):
+        """
+        """
+        report = "====== PAIRWISE ALIGNER ======\n\n"
+        report += "  Parameters of pairwise2\n"
+        report += "  Maximal number of alignement : {}\n".format(pairwise2.MAX_ALIGNMENTS)
+        report += "  Match bonus : {}\n".format(self.match)
+        report += "  Mismatch Penality : {}\n".format(self.mismatch)
+        report += "  Gap open Penality : {}\n".format(self.open_gap)
+        report += "  Gap extend Penality : {}\n".format(self.extend_gap)
+        report += "  Score cutoff : {}\n".format(self.cutoff)
+
+        return report
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+class PairwiseAligner2(object):
+    """
+    @class  PairwiseAligner
+    @brief  
+    """
+    # TODO write a wrapper for an external faster SW aligner
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
+    #~~~~~~~FONDAMENTAL METHODS~~~~~~~#
+
+    def __repr__(self):
+        return self.__str__() + self.get_report()
+
+    def __str__(self):
+        return "<Instance of {} from {} >\n".format(self.__class__.__name__, self.__module__)
+
+    def __init__ (self, max_alignment=5, match=2, mismatch=-2, open_gap=-2, extend_gap=-2, cutoff=1.5):
+        """
+        @param max_alignment Maximal number of alignement per read to output
+        @param match Gain value in case match
+        @param mismatch Penality value in case mismatch
+        @param open_gap Penality value in case opening a gap
+        @param extend_gap Penality value in case extending a gap
+        @param cutoff Raw SW score divided by the lenght of the adapter
+        """
+
+        # Store parameters in object variables
+        pairwise2.MAX_ALIGNMENTS = max_alignment
+        self.match = match
+        self.mismatch = mismatch
+        self.open_gap = open_gap
+        self.extend_gap = extend_gap
+        self.cutoff = cutoff
+
+    #~~~~~~~PUBLIC METHODS~~~~~~~#
+
+    def find_match (self, adapter, sequence):
+        """
+        Pairwise alignment using the buildin Biopython function pairwise2
+        """
+
+        # Perform a local SW alignment with specific penalties
+        match_list = pairwise2.align.localms(
+            adapter,
+            sequence,
+            self.match,
+            self.mismatch,
+            self.open_gap,
+            self.extend_gap)
+
+        #for seqA, seqB, score, begin, end in match_list:
+            #if score/len(adapter) > self.cutoff:
+                #print("{}\n{}\nScore:{}\tBegin:{}\tEnd:{}".format(seqA, seqB, score, begin, end))
 
         # Return begin and end position if a match has a score higher than the cutoff value
         return [[begin, end] for seqA, seqB, score, begin, end in match_list if score/len(adapter) > self.cutoff]

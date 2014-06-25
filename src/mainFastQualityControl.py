@@ -1,15 +1,16 @@
 min_qual = 31
-adapter_list = ["gcgcgcg", "atattaat", "tttaggcg", "aataccgattc"]
-min_size = 50
+min_size = 100
 input_qual = "fastq-sanger"
-output_qual = "fastq-sanger"
-R1_path = "../test/fastq/med_R1.fastq.gz"
-R2_path = "../test/fastq/med_R2.fastq.gz"
+R1_path = "../test/fastq/small_R1.fastq.gz"
+R2_path = "../test/fastq/small_R2.fastq.gz"
+adapter_path = "../test/adapter.fa"
+read_len = 150
 
 
 from FastqQualityControl import FastqFilter, QualityFilter, AdapterTrimmer, PairwiseAligner
-
 a = PairwiseAligner() # VALID
-b = AdapterTrimmer(a, "adapter.fa", 100, 150)  # VALID
-c = QualityFilter(min_qual)
-d = FastqFilter(b,c...
+b = AdapterTrimmer(a, adapter_path, min_size, read_len)  # VALID
+c = QualityFilter(min_qual)# VALID
+d = FastqFilter(R1_path, R2_path, c, b, input_qual)# VALID
+
+d.filter()
