@@ -58,18 +58,18 @@ class FastqFilter(object):
         """
         # Start a time counter
         start_time = time()
-        
+
         try:
             print("Uncompressing and extracting data")
             # Open fastq and initialize a generator to iterate over files
-            in_R1 = gzip.open(self.R1_path, "r")
-            in_R2 = gzip.open(self.R2_path, "r")
+            in_R1 = gzip.open(R1_path, "r")
+            in_R2 = gzip.open(R2_path, "r")
             genR1 = SeqIO.parse(in_R1, self.input_qual)
             genR2 = SeqIO.parse(in_R2, self.input_qual)
-            
+
             # Open output stream to write in fastq.gz files
-            out_name_R1 = "./fastq/" + file_basename(self.R1_path) + "_trimmed.fastq.gz"
-            out_name_R2 = "./fastq/" + file_basename(self.R2_path) + "_trimmed.fastq.gz"
+            out_name_R1 = file_basename(R1_path) + "_trimmed.fastq.gz"
+            out_name_R2 = file_basename(R2_path) + "_trimmed.fastq.gz"
             out_R1 = gzip.open(out_name_R1, "w")
             out_R2 = gzip.open(out_name_R2, "w")
 
@@ -77,7 +77,7 @@ class FastqFilter(object):
             print("Number of sequence analyzed :\n")
             # Parsing files and filtering sequences matching quality requirements
             while True:
-                
+
                 # Import a new pair of fastq until end of file
                 seqR1 = next(genR1, None)
                 seqR2 = next(genR2, None)
@@ -86,25 +86,25 @@ class FastqFilter(object):
                 self.total +=1
                 if self.total%1000 == 0:
                     print (self.total)
-                
+
                 # Quality filtering
                 if self.qual:
                     seqR1 = self.qual.filter(seqR1)
                     seqR2 = self.qual.filter(seqR2)
                     if not seqR1 or not seqR2:
                         continue
-                
+
                 # Adapter trimming and size filtering
                 if self.adapt:
                     seqR1 = self.adapt.trimmer(seqR1)
                     seqR2 = self.adapt.trimmer(seqR2)
                     if not seqR1 or not seqR2:
                         continue
-                
+
                 # If all test passed = write fastq to the files
-                out_R1.write(seqR1.format("fastq_sanger"))
-                out_R2.write(seqR2.format("fastq_sanger"))
-            
+                out_R1.write(seqR1.format("fastq-sanger"))
+                out_R2.write(seqR2.format("fastq-sanger"))
+
             in_R1.close()
             in_R2.close()
             out_R1.close()
@@ -114,7 +114,8 @@ class FastqFilter(object):
             print (E)
             exit (0)
 
-        print (self.get_report(time()-start_time), R1_path, R2_path)
+        return (self.get_report(time()-start_time, R1_path, R2_path))
+
 
     def get_report (self, exec_time=None, R1_path=None, R2_path=None):
         """
@@ -200,13 +201,13 @@ class QualityFilter(object):
             report += "  Mean quality : {}\n".format(mean_qual)
             report += "  Minimal quality : {}\n".format(min_qual)
             report += "  Maximal quality : {}\n".format(max_qual)
-        
+
         report += "\n"
         return report
 
     def trace_graph (self):
         """
-        
+
         """
         print ("\tCreating a graphical output of mean quality distribution")
 
@@ -243,11 +244,11 @@ class AdapterTrimmer(object):
         self.min_size = min_size
         self.read_len = read_len
         self.aligner = aligner
-        
+
         # Import a list of adapters and add the reverse complements of adapters to the list
         self.adapter_list = import_seq(adapter_path, "list", "fasta")
         assert self.adapter_list, "The adater list is empty"
-        
+
         adapter_rc = []
         for i in self.adapter_list:
             rc = i.reverse_complement()
@@ -276,7 +277,7 @@ class AdapterTrimmer(object):
         """
         #stime = time()
         match_list = []
-        
+
         for adapter in self.adapter_list:
             # Find matches of the adapter along the current read
             adapter_match = self.aligner.find_match(str(adapter.seq).lower(), str(record.seq).lower())
@@ -284,7 +285,7 @@ class AdapterTrimmer(object):
             adapter.description += (len(adapter_match))
             # Add to the list of
             match_list.extend(adapter_match)
-        
+
         #print ("FIND MATCH = {} ms".format((time()-stime)/1000))
         #stime = time()
 
@@ -296,17 +297,17 @@ class AdapterTrimmer(object):
         # Else find the longer interval without adaptor matches
         start, end = self._longer_interval (match_list, len(record))
         assert 0 <= start < end <= len(record), "Invalid interval returned"
-        
+
         #print ("LONGER INTERVAL = {} ms".format((time()-stime)/1000))
         #stime = time()
-        
+
         # Update counters
         self.seq_trimmed += 1
         self.base_trimmed += (len(record)-(end-start))
         self._update_coverage (start, end)
-        
+
         #print ("COUNTUP = {} ms".format((time()-stime)/1000))
-        
+
         # Return a slice of the reccord corresponding to the longer interval
         if end-start >= self.min_size:
             self.len_pass +=1
