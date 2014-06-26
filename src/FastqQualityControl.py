@@ -22,6 +22,7 @@ from Bio import pairwise2
 # Local Package import
 from Utilities import import_seq
 from Utilities import fill_between_graph
+from Utilities import file_basename
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 class FastqFilter(object):
@@ -39,39 +40,38 @@ class FastqFilter(object):
     def __str__(self):
         return "<Instance of {} from {} >\n".format(self.__class__.__name__, self.__module__)
 
-    def __init__ (self, R1_path, R2_path, quality_filter, adapter_trimmer, input_qual):
+    def __init__ (self, quality_filter, adapter_trimmer, input_qual):
         """
         """
         # Declare and initialize object variables
         self.total = 0
 
         # Store parameters in object variables
-        self.R1_path = R1_path
-        self.R2_path = R2_path
         self.qual = quality_filter
         self.adapt = adapter_trimmer
         self.input_qual = input_qual
 
     #~~~~~~~CLASS METHODS~~~~~~~#
 
-    def filter(self):
+    def filter(self, R1_path, R2_path):
         """
         """
         # Start a time counter
         start_time = time()
-        # Declare list to store valid fastq sequences
-        ListR1 = []
-        ListR2 = []
         
         try:
             print("Uncompressing and extracting data")
-            # Input fastq files
-            input_R1 = gzip.open(self.R1_path, "r")
-            input_R2 = gzip.open(self.R2_path, "r")
-
-            # Initialize a generator to iterate over fastq files
-            genR1 = SeqIO.parse(input_R1, self.input_qual)
-            genR2 = SeqIO.parse(input_R2, self.input_qual)
+            # Open fastq and initialize a generator to iterate over files
+            in_R1 = gzip.open(self.R1_path, "r")
+            in_R2 = gzip.open(self.R2_path, "r")
+            genR1 = SeqIO.parse(in_R1, self.input_qual)
+            genR2 = SeqIO.parse(in_R2, self.input_qual)
+            
+            # Open output stream to write in fastq.gz files
+            out_name_R1 = "./fastq/" + file_basename(self.R1_path) + "_trimmed.fastq.gz"
+            out_name_R2 = "./fastq/" + file_basename(self.R2_path) + "_trimmed.fastq.gz"
+            out_R1 = gzip.open(out_name_R1, "w")
+            out_R2 = gzip.open(out_name_R2, "w")
 
             print("Parsing files and filtering sequences\n")
             print("Number of sequence analyzed :\n")
@@ -83,11 +83,10 @@ class FastqFilter(object):
                 seqR2 = next(genR2, None)
                 if not seqR1 or not seqR2:
                     break
-                                   
                 self.total +=1
                 if self.total%1000 == 0:
                     print (self.total)
-                    
+                
                 # Quality filtering
                 if self.qual:
                     seqR1 = self.qual.filter(seqR1)
@@ -95,7 +94,6 @@ class FastqFilter(object):
                     if not seqR1 or not seqR2:
                         continue
                 
-                stime = time()
                 # Adapter trimming and size filtering
                 if self.adapt:
                     seqR1 = self.adapt.trimmer(seqR1)
@@ -103,33 +101,31 @@ class FastqFilter(object):
                     if not seqR1 or not seqR2:
                         continue
                 
-                print ("TOTAL TRIMMING = {} ms\n".format((time()-stime)/1000))
-                
-                # If all test passed = append Sequence to the list
-                ListR1.append(seqR1)
-                ListR2.append(seqR2)
-
-            input_R1.close()
-            input_R2.close()
+                # If all test passed = write fastq to the files
+                out_R1.write(seqR1.format("fastq_sanger"))
+                out_R2.write(seqR2.format("fastq_sanger"))
+            
+            in_R1.close()
+            in_R2.close()
+            out_R1.close()
+            out_R2.close()
 
         except IOError as E:
             print (E)
             exit (0)
 
-        print (self.get_report(time()-start_time))
-        assert ListR1 and ListR2, "All reads were filtered out by parameters"
-        return ListR1, ListR2
+        print (self.get_report(time()-start_time), R1_path, R2_path)
 
-    def get_report (self, exec_time=None):
+    def get_report (self, exec_time=None, R1_path=None, R2_path=None):
         """
         Return a report
         """
         report = "====== FASTQFILTER QUALITY CONTROL ======\n\n"
         if exec_time:
             report += "  Execution time : {} s\n".format(exec_time)
+            report += "  R1 file : {}\n".format (R1_path)
+            report += "  R2 file : {}\n".format (R2_path)
         report += "  Total sequences processed : {}\n".format(self.total)
-        report += "  R1 file : {}\n".format (self.R1_path)
-        report += "  R2 file : {}\n".format (self.R2_path)
         report += "  Input quality score : {}\n\n".format (self.input_qual)
         if self.qual:
             report += self.qual.get_report()
@@ -210,11 +206,9 @@ class QualityFilter(object):
 
     def trace_graph (self):
         """
-        Output a graphical representation of read coverage over junction. Require
-        the third party package pyplot from matplotlib. Need global parameters to be
-        executed correctly.
+        
         """
-        print ("\tCreating a graphical output of read coverage after trimming")
+        print ("\tCreating a graphical output of mean quality distribution")
 
         X = self.qdict.keys()
         Y = self.qdict.values()
@@ -280,7 +274,7 @@ class AdapterTrimmer(object):
     def trimmer (self, record):
         """
         """
-        stime = time()
+        #stime = time()
         match_list = []
         
         for adapter in self.adapter_list:
@@ -291,8 +285,8 @@ class AdapterTrimmer(object):
             # Add to the list of
             match_list.extend(adapter_match)
         
-        print ("FIND MATCH = {} ms".format((time()-stime)/1000))
-        stime = time()
+        #print ("FIND MATCH = {} ms".format((time()-stime)/1000))
+        #stime = time()
 
         # In case no match were found, the sequence doesn't need to be modify
         if not match_list:
@@ -303,16 +297,15 @@ class AdapterTrimmer(object):
         start, end = self._longer_interval (match_list, len(record))
         assert 0 <= start < end <= len(record), "Invalid interval returned"
         
-        print ("LONGER INTERVAL = {} ms".format((time()-stime)/1000))
-        stime = time()
+        #print ("LONGER INTERVAL = {} ms".format((time()-stime)/1000))
+        #stime = time()
         
         # Update counters
         self.seq_trimmed += 1
         self.base_trimmed += (len(record)-(end-start))
         self._update_coverage (start, end)
         
-        print ("COUNTUP = {} ms".format((time()-stime)/1000))
-        stime = time()
+        #print ("COUNTUP = {} ms".format((time()-stime)/1000))
         
         # Return a slice of the reccord corresponding to the longer interval
         if end-start >= self.min_size:
@@ -342,9 +335,7 @@ class AdapterTrimmer(object):
 
     def trace_graph (self):
         """
-        Output a graphical representation of read coverage over junction. Require
-        the third party package pyplot from matplotlib. Need global parameters to be
-        executed correctly.
+
         """
         print ("\tCreating a graphical output of read coverage after trimming")
 
@@ -401,78 +392,6 @@ class PairwiseAligner(object):
     """
     @class  PairwiseAligner
     @brief  Require the third party package Biopython
-    """
-    # TODO write a wrapper for an external faster SW aligner
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-
-    #~~~~~~~FONDAMENTAL METHODS~~~~~~~#
-
-    def __repr__(self):
-        return self.__str__() + self.get_report()
-
-    def __str__(self):
-        return "<Instance of {} from {} >\n".format(self.__class__.__name__, self.__module__)
-
-    def __init__ (self, max_alignment=5, match=2, mismatch=-2, open_gap=-2, extend_gap=-2, cutoff=1.5):
-        """
-        @param max_alignment Maximal number of alignement per read to output
-        @param match Gain value in case match
-        @param mismatch Penality value in case mismatch
-        @param open_gap Penality value in case opening a gap
-        @param extend_gap Penality value in case extending a gap
-        @param cutoff Raw SW score divided by the lenght of the adapter
-        """
-
-        # Store parameters in object variables
-        pairwise2.MAX_ALIGNMENTS = max_alignment
-        self.match = match
-        self.mismatch = mismatch
-        self.open_gap = open_gap
-        self.extend_gap = extend_gap
-        self.cutoff = cutoff
-
-    #~~~~~~~PUBLIC METHODS~~~~~~~#
-
-    def find_match (self, adapter, sequence):
-        """
-        Pairwise alignment using the buildin Biopython function pairwise2
-        """
-
-        # Perform a local SW alignment with specific penalties
-        match_list = pairwise2.align.localms(
-            adapter,
-            sequence,
-            self.match,
-            self.mismatch,
-            self.open_gap,
-            self.extend_gap)
-
-        #for seqA, seqB, score, begin, end in match_list:
-            #if score/len(adapter) > self.cutoff:
-                #print("{}\n{}\nScore:{}\tBegin:{}\tEnd:{}".format(seqA, seqB, score, begin, end))
-
-        # Return begin and end position if a match has a score higher than the cutoff value
-        return [[begin, end] for seqA, seqB, score, begin, end in match_list if score/len(adapter) > self.cutoff]
-
-    def get_report (self):
-        """
-        """
-        report = "====== PAIRWISE ALIGNER ======\n\n"
-        report += "  Parameters of pairwise2\n"
-        report += "  Maximal number of alignement : {}\n".format(pairwise2.MAX_ALIGNMENTS)
-        report += "  Match bonus : {}\n".format(self.match)
-        report += "  Mismatch Penality : {}\n".format(self.mismatch)
-        report += "  Gap open Penality : {}\n".format(self.open_gap)
-        report += "  Gap extend Penality : {}\n".format(self.extend_gap)
-        report += "  Score cutoff : {}\n".format(self.cutoff)
-
-        return report
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-class PairwiseAligner2(object):
-    """
-    @class  PairwiseAligner
-    @brief  
     """
     # TODO write a wrapper for an external faster SW aligner
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
