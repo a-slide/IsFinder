@@ -99,17 +99,11 @@ def mkdir(fp):
     # Function specific imports
     from os import mkdir, path
 
-    try:
-        if path.exists(fp) and path.isdir(fp):
-            print ("'{}' already exist in the current directory".format(fp))
-        else:
-            print ("Creating '{}' in the current directory".format(fp))
-            mkdir(fp)
-
-    # In case
-    except OSError as E:
-        print E
-        raise
+    if path.exists(fp) and path.isdir(fp):
+        print ("'{}' already exist in the current directory".format(fp))
+    else:
+        print ("Creating '{}' in the current directory".format(fp))
+        mkdir(fp)
 
 def file_basename (path):
     """
