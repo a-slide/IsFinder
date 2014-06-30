@@ -8,7 +8,7 @@ from time import time
 # Local Package import
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-class Aligner(object):
+class (object):
     """
     @class  ShortReadAligner
     @brief
@@ -30,7 +30,7 @@ class Aligner(object):
         self.total = 0
 
         # Store parameters in object variables
-        self.qual = quality_filter
+        self.aligner = quality_filter
         self.adapt = adapter_trimmer
         self.input_qual = input_qual
 
