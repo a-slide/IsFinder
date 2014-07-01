@@ -105,17 +105,27 @@ def mkdir(fp):
         print ("Creating '{}' in the current directory".format(fp))
         mkdir(fp)
 
-def merge_files (input_list, output, compress_output=True):
+def merge_files (input_list, output=None, compress_output=True):
     """
     @param input_list List of files to merge
     @param output Destination file
     """
     # Standard library import
     import gzip
-    from os.path import getsize, isfile
+    from os.path import getsize, isfile, abspath
+    from tempfile import mkstemp
 
-    # Initialize a handle for writting output file
+    # Creating and storing a file for writting output
+    if not output:
+        if compress_output:
+            OSlevel, output = mkstemp(suffix=".gz")
+        else:
+            OSlevel, output = mkstemp()
+    else:
+        output = abspath(output)
+
     try:
+        # Opening the outpout file for writting
         if compress_output:
             outfile = gzip.open(output, "wb")
         else:
@@ -131,6 +141,7 @@ def merge_files (input_list, output, compress_output=True):
             else:
                 infile = open(input, "rb")
 
+            # writting infile in outfile
             outfile.write(infile.read())
             infile.close()
 
@@ -143,7 +154,7 @@ def merge_files (input_list, output, compress_output=True):
         print(E)
         exit
 
-    return True
+    return output
 
 
 def file_basename (path):
