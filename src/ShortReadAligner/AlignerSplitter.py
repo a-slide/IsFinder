@@ -21,7 +21,7 @@ class AlignerSplitter(object):
         return self.__str__() + self.get_report()
 
     def __str__(self):
-        return "<Instance of {} from {} >\n".format(self.__class__.__name__, self.__module__)
+        return "\n<Instance of {} from {}>\n".format(self.__class__.__name__, self.__module__)
 
     def __init__ (self, FastaReader, aligner):
         """

@@ -234,7 +234,7 @@ def import_seq(filename, col_type="dict", seq_type="fasta"):
         return seq_col
 
     except IOError as E:
-        print('CRITICAL ERROR. The file ' + filename + ' is not readable. Exit')
+        print(E)
         exit
 
     except AssertionError as E:
