@@ -105,6 +105,47 @@ def mkdir(fp):
         print ("Creating '{}' in the current directory".format(fp))
         mkdir(fp)
 
+def merge_files (input_list, output, compress_output=True):
+    """
+    @param input_list List of files to merge
+    @param output Destination file
+    """
+    # Standard library import
+    import gzip
+    from os.path import getsize, isfile
+
+    # Initialize a handle for writting output file
+    try:
+        if compress_output:
+            outfile = gzip.open(output, "wb")
+        else:
+            outfile = open(output, "wb")
+
+        # For all files in the input list
+        for input in input_list:
+
+            # In case the file is gzipped
+            if file_extension(input) == "gz":
+                infile = gzip.open(input, "rb")
+            # In case the file is not compressed
+            else:
+                infile = open(input, "rb")
+
+            outfile.write(infile.read())
+            infile.close()
+
+        # Close and verify the output file
+        outfile.close()
+        assert isfile(output), "No output file found"
+        assert getsize(output) > 0, "The output file is empty"
+
+    except (IOError,AssertionError)  as E:
+        print(E)
+        exit
+
+    return True
+
+
 def file_basename (path):
     """
     Return the basename of a file without folder location and extension
@@ -148,7 +189,7 @@ def import_seq(filename, col_type="dict", seq_type="fasta"):
     from Bio import SeqIO
     import gzip
 
-    # Try to open the file fist gz compressed and uncompressed
+    # Try to open the file first gz compressed and uncompressed
     try:
 
         # Verify if the type of the input sequence is valid
@@ -182,7 +223,7 @@ def import_seq(filename, col_type="dict", seq_type="fasta"):
         return seq_col
 
     except IOError as E:
-        print('CRITICAL ERROR. The fasta file ' + filename + ' is not readable. Exit')
+        print('CRITICAL ERROR. The file ' + filename + ' is not readable. Exit')
         exit
 
     except AssertionError as E:
