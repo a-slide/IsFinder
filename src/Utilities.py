@@ -12,12 +12,11 @@
 
 #~~~~~~~COMMAND LINE UTILITIES~~~~~~~#
 
-def run_command(cmd, stdinput=None, control_stderr=True, ret_stderr=False, ret_stdout=True):
+def run_command(cmd, stdin=None, ret_stderr=False, ret_stdout=True):
     """
     Run a command line in the default shell and return the standard output
     @param  cmd A command line string formated as a string
     @param  stdinput    Facultative parameters to redirect an object to the standard input
-    @param  control_stderr   If True the standard error output will be verified
     @param  ret_stderr  If True the standard error output will be returned
     @param  ret_stdout  If True the standard output will be returned
     @note If ret_stderr and ret_stdout are True a tuple will be returned and if both are False
@@ -29,33 +28,29 @@ def run_command(cmd, stdinput=None, control_stderr=True, ret_stderr=False, ret_s
     # Function specific imports
     from subprocess import Popen, PIPE
 
-    # Common error message in case of Exception
-    msg = "An error occured while trying to execute the following command :\n{}".format(cmd)
+    # Execute the command line in the default shell
+    if stdin:
+        proc = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        stdout, stderr = proc.communicate(input=stdin)
+    else:
+        proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
+        stdout, stderr = proc.communicate()
 
-    # Try to execute the command line in the default shell
-    try:
-        if stdinput:
-            stdout, stderr = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE).communicate(input=stdinput)
-        else:
-            stdout, stderr = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE).communicate()
+    if proc.returncode == 1:
+        msg = "An error occured during execution of following command :\n"
+        msg += "COMMAND : {}\n".format(cmd)
+        msg += "STDERR : {}\n".format(stderr)
+        raise Exception (msg)
 
-        # If a message is returned on the std err output an SystemError is raised
-        if control_stderr and stderr:
-            raise OSError("{}\n{}".format(msg, stderr))
-
-        # Else return data according to user choices is returned
-        if ret_stdout and ret_stderr:
-            return stdout, stderr
-        elif ret_stdout:
-            return stdout
-        elif ret_stderr:
-            return sterr
-        else:
-            return None
-
-    # Take care of possible exceptions returned by Popen
-    except (OSError, ValueError) as E:
-        print (E)
+    # Else return data according to user choices is returned
+    if ret_stdout and ret_stderr:
+        return stdout, stderr
+    elif ret_stdout:
+        return stdout
+    elif ret_stderr:
+        return stderr
+    else:
+        return None
 
 def make_cmd_str(prog_name, opt_dict={}, opt_list=[]):
     """
@@ -152,7 +147,7 @@ def merge_files (input_list, output=None, compress_output=True):
 
     except (IOError,AssertionError)  as E:
         print(E)
-        exit
+        exit()
 
     return output
 
@@ -235,11 +230,11 @@ def import_seq(filename, col_type="dict", seq_type="fasta"):
 
     except IOError as E:
         print(E)
-        exit
+        exit()
 
     except AssertionError as E:
         print (E)
-        exit
+        exit()
 
 #~~~~~~~GRAPHICAL UTILIES~~~~~~~#
 

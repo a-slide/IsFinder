@@ -26,7 +26,7 @@ class FastqFilter(object):
     def __str__(self):
         return "<Instance of {} from {} >\n".format(self.__class__.__name__, self.__module__)
 
-    def __init__ (self, quality_filter, adapter_trimmer, input_qual):
+    def __init__ (self, quality_filter=None, adapter_trimmer=None, input_qual="fastq-sanger"):
         """
         """
         # Declare and initialize object variables
@@ -60,7 +60,6 @@ class FastqFilter(object):
             out_R2 = gzip.open(out_name_R2, "w")
 
             print("Parsing files and filtering sequences\n")
-            print("Number of sequence analyzed :\n")
             # Parsing files and filtering sequences matching quality requirements
             while True:
 
@@ -70,8 +69,8 @@ class FastqFilter(object):
                 if not seqR1 or not seqR2:
                     break
                 self.total +=1
-                if self.total%1000 == 0:
-                    print (self.total)
+                if self.total%10000 == 0:
+                    print ("\t{} sequences processed".format(self.total))
 
                 # Quality filtering
                 if self.qual:
@@ -114,9 +113,5 @@ class FastqFilter(object):
             report += "  R2 file : {}\n".format (R2_path)
         report += "  Total sequences processed : {}\n".format(self.total)
         report += "  Input quality score : {}\n\n".format (self.input_qual)
-        if self.qual:
-            report += self.qual.get_report()
-        if self.adapt:
-            report += self.adapt.get_report()
 
         return report
