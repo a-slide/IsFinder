@@ -1,4 +1,3 @@
-
 #~~~~~~~GLOBAL IMPORTS~~~~~~~#
 # Standard library packages import
 import gzip
@@ -61,7 +60,7 @@ class FastaReader(object):
             for source in self.source_paths:
                 print ("Start parsing {}...".format(source))
                 # Open gzipped fasta or uncompressed fasta
-                if file_extension(source) == "gz" or file_extension(source) == "GZ":
+                if file_extension(source)  in ["gz","GZ"]:
                     infile = gzip.open(source, "r")
                 else:
                     infile = open(source, "r")

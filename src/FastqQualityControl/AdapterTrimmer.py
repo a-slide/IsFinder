@@ -1,7 +1,7 @@
 #~~~~~~~GLOBAL IMPORTS~~~~~~~#
 
 # Local Package import
-from Utilities import import_seq, fill_between_graph
+from Utilities import import_seq
 from ssw_wrap import Aligner
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
@@ -15,14 +15,31 @@ class AdapterTrimmer(object):
     #~~~~~~~FONDAMENTAL METHODS~~~~~~~#
 
     def __repr__(self):
-        return self.__str__() + self.get_report()
+        msg = self.__str__()
+        msg += "  List of adapters imported for trimming"
+
+        for a in self.adapter_list:
+            msg += "\n  Name : {}".format(a.id)
+            msg += "  Sequence : {}".format(a.seq)
+            msg += "  Min score : {}".format(a.annotations["min_score"])
+            msg += "  Min len : {}".format(a.annotations["min_len"])
+            if self.run:
+                msg += "  Trimmed : {}".format(a.annotations["count"])
+
+        if self.run:
+            msg += "\n  Sequences untrimmed : {}\n".format(self.seq_untrimmed)
+            msg += "  Sequences trimmed : {}\n".format(self.seq_trimmed)
+            msg += "  DNA base trimmed : {}\n".format(self.base_trimmed)
+            msg += "  Fail len filtering: {}\n".format(self.len_fail)
+            msg += "  Pass len filtering : {}\n".format(self.len_pass)
+            msg += "  Total pass : {}\n\n".format(self.len_pass+self.seq_untrimmed)
+        return msg
 
     def __str__(self):
         return "<Instance of {} from {} >\n".format(self.__class__.__name__, self.__module__)
 
     def __init__ (self, aligner, adapter_path, min_read_len=0.6, min_match_len=0.8, min_match_score=1.4):
         """
-
         @param aligner Wrapper object of pairwise alignement
         @param adapter_path Path of a multi fasta file containing all the adapters sequences
         @param min_read_len Fraction of read lenth = minimal size of fragment after trimming
@@ -60,12 +77,15 @@ class AdapterTrimmer(object):
         self.base_trimmed = 0
         self.len_pass = 0
         self.len_fail = 0
+        self.run = False
 
     #~~~~~~~PUBLIC METHODS~~~~~~~#
 
     def trimmer (self, record):
         """
+        @param record A seq record object containing the subject reference sequence to be trimmed
         """
+        self.run = True
         match_list = []
         len_rec = len(record)
 
@@ -106,26 +126,6 @@ class AdapterTrimmer(object):
             self.len_fail +=1
             return None
 
-    def get_report (self):
-        """
-        """
-        report = "====== ADAPTER TRIMMER ======\n\n"
-        report += "  List of adapters imported for trimming\n"
-        for a in self.adapter_list:
-            report += "    Name : {}\tSequence : {}\tTrimmed : {}\tMin score : {}\tMin len : {}\n".format(
-                a.id,
-                a.seq,
-                a.annotations["count"],
-                a.annotations["min_score"],
-                a.annotations["min_len"])
-        report += "\n  Sequences untrimmed : {}\n".format(self.seq_untrimmed)
-        report += "  Sequences trimmed : {}\n".format(self.seq_trimmed)
-        report += "  DNA base trimmed : {}\n".format(self.base_trimmed)
-        report += "  Fail len filtering: {}\n".format(self.len_fail)
-        report += "  Pass len filtering : {}\n".format(self.len_pass)
-        report += "  Total pass : {}\n\n".format(self.len_pass+self.seq_untrimmed)
-        return report
-
     #~~~~~~~PRIVATE METHODS~~~~~~~#
 
     def _longer_interval(self, match_list, len_seq):
@@ -156,3 +156,22 @@ class AdapterTrimmer(object):
 
         #print ("Longer interval = {} [{}:{}]".format(inter_max, start_max+1, end_max-1))
         return start_max, end_max
+
+    #~~~~~~~ GETTERS ~~~~~~~#
+
+    def get_seq_untrimmed (self):
+        return self.seq_untrimmed
+
+    def get_seq_trimmed (self):
+        return self.seq_trimmed
+
+    def get_base_trimmed (self):
+        return self.base_trimmed
+
+    def get_len_pass (self):
+        return self.len_pass
+
+    def get_len_fail (self):
+        return self.len_fail
+
+
