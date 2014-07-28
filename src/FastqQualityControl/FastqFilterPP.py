@@ -238,6 +238,7 @@ class FastqFilterPP(object):
         out_R1.close()
         out_R2.close()
 
-if __name__ == '__main__':
 
+
+if __name__ == '__main__':
     c = FastqFilter(argv[1], argv[2])
